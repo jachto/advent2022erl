@@ -1,4 +1,4 @@
--module(advent_2022_8a).
+-module(advent_2022_8).
 
 -compile(export_all).
 
@@ -22,12 +22,80 @@ run(File, Part) when Part == 1 orelse Part == 2 ->
     {ok, Fd} = file:open(File, [read]),
     Ans = case Part of
               1 ->
-                  sum_seen_trees(Fd);
+                  1647 == sum_seen_trees(Fd),
+                  1647;
               2 ->
-                  to_be_done
+                  392080 == scenic_score(Fd),
+                  392080.
           end,
     file:close(Fd),
     Ans.
+
+%%
+%% Part 2 
+%%
+scenic_score(Fd) ->
+    {ok, Map} = get_grid_from_file(Fd, maps:new()),
+    {XMax, YMax} = maps:get(size, Map),
+    MaxScore = 0,
+    calc_score(1, 1, {XMax, YMax}, MaxScore, Map). 
+
+print(Fmt, Args, true)    -> io:format(Fmt, Args);
+print(_Fmt, _Args, false) -> ok.
+
+x_score(X, Y, Step, Min, Max, Value, Map, Sum)
+  when (X >= Min) andalso (X =< Max) ->
+    TreeVal = maps:get({X,Y}, Map),
+    if
+        Value > TreeVal ->
+            x_score(X+Step, Y, Step, Min, Max, Value, Map, Sum+1);
+        Value =< TreeVal ->
+            Sum + 1
+    end;
+x_score(_X, _Y, _Step, _Min, _Max, _Value, _Map, Sum) ->
+    Sum.
+    
+y_score(X, Y, Step, Min, Max, Value, Map, Sum)
+  when (Y >= Min) andalso (Y =< Max) ->
+    TreeVal = maps:get({X,Y}, Map),
+    if
+        Value > TreeVal ->
+            y_score(X, Y+Step, Step, Min, Max, Value, Map, Sum+1);
+        Value =< TreeVal ->
+            Sum + 1
+    end;
+y_score(_X, _Y, _Step, _Min, _Max, _Value, _Map, Sum) ->
+    Sum.
+
+calc_score(_X, Y, {_XMax, YMax}, MaxScore, _Map) when (Y > YMax) ->
+    MaxScore;
+calc_score(X, Y, {XMax, YMax}, MaxScore, Map) when (X > XMax) ->
+    calc_score(1, Y+1, {XMax, YMax}, MaxScore, Map);
+calc_score(X, Y, {XMax, YMax}, MaxScore, Map) ->
+    TreeVal = maps:get({X,Y}, Map),
+    L = x_score(X-1, Y, -1, 1, XMax, TreeVal, Map, 0),
+    R = x_score(X+1, Y,  1, 1, XMax, TreeVal, Map, 0),
+    U = y_score(X, Y+1,  1, 1, XMax, TreeVal, Map, 0),
+    D = y_score(X, Y-1, -1, 1, XMax, TreeVal, Map, 0),
+    Prod = L * R * U * D,
+    MaxScoreNew = if Prod > MaxScore -> Prod; true -> MaxScore end,
+    calc_score(X+1, Y, {XMax, YMax}, MaxScoreNew, Map).
+    
+
+get_grid_from_file(Fd, Map) -> get_grid_from_file(Fd, 1, Map).
+
+get_grid_from_file(Fd, Y, Map) ->
+    case file:read_line(Fd) of
+        {ok, ARow} ->
+            Row = lists:droplast(ARow),
+            PutCoord = fun(E, {X, M}) -> {X+1, maps:put({X, Y}, E - $0, M)} end,
+            {_, MapNew} = lists:foldl(PutCoord, {1, Map}, Row),
+            get_grid_from_file(Fd, Y+1, maps:put(size, {length(Row), Y}, MapNew));
+
+        eof ->
+            {ok, Map}
+    end.
+
 
 
 
