@@ -31,6 +31,10 @@ game(Fd, Sum, Strategy) ->
     case file:read_line(Fd) of
         {ok, [Competitor,_Space,Me|_]}
           when Strategy == 1 andalso ?is_game_chars(Competitor, Me) ->
+
+            %%! PointMySign = element(Me - $X + 1, {1,2,3})
+            %%! PointMySign = [element(2, P) || P <- [{$X,1},{$Y,2},{$Z,3}], element(1, P) == Me]
+
             C = sign(Competitor),
             M = sign(Me),
             game(Fd, sum_round(C, M) + Sum, Strategy);

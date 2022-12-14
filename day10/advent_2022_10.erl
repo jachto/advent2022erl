@@ -8,7 +8,7 @@
 %% made me guess that the only possible first letter would be P.
 %% The answer was PBZGRAZA.
 %%
-%% Introducint the threeshould 20, 60, 80 and so on, made
+%% Introducint the threeshould 20, 60, 100, 140 and so on, made
 %% it a bit easier to realize when to calculate the strength signal.
 %%
 -define(rest(Val, D), (Val rem D)).
@@ -40,7 +40,7 @@ signal_strength([Op|Ops], X, Cycle, Threeshold, Sum) ->
     XBeforeOp = X,
     {XNew, CycleNew} = op(Op, X, Cycle),
     S = strength(XBeforeOp, CycleNew, Threeshold),
-    T = threeshold(S, Threeshold),
+    T = threeshold(CycleNew, Threeshold),
     signal_strength(Ops, XNew, CycleNew, T, Sum + S);
 signal_strength([], _, _, _, Sum) ->
     Sum.
